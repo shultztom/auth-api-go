@@ -1,0 +1,112 @@
+replicaCount: 1
+
+image:
+  repository: us-central1-docker.pkg.dev/shultzlab/docker-gcp/auth-api-go
+  pullPolicy: Always
+  tag: "latest"
+
+imagePullSecrets:
+  - name: gcp-registry
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+# fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+# runAsUser: 1000
+
+env:
+  - name: PG_USER
+    valueFrom:
+      secretKeyRef:
+        name: auth.api.secret
+        key: PG_USER
+        optional: false
+  - name: PG_PASS
+    valueFrom:
+      secretKeyRef:
+        name: auth.api.secret
+        key: PG_PASS
+        optional: false
+  - name: PG_DB
+    valueFrom:
+      secretKeyRef:
+        name: auth.api.secret
+        key: PG_DB
+        optional: false
+  - name: PG_HOST
+    valueFrom:
+      secretKeyRef:
+        name: auth.api.secret
+        key: PG_HOST
+        optional: false
+  - name: JWT_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: auth.api.secret
+        key: JWT_SECRET
+        optional: false
+  - name: IS_CLOUD
+    value: "true"
+  - name: GIN_MODE
+    value: "release"
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  tls:
+    - secretName: auth-api-go-tls
+      hosts:
+        - auth-api-go.shultzlab.com
+  hosts:
+    - host: auth-api-go.shultzlab.com
+      paths:
+        - name: /
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+#   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

@@ -19,9 +19,15 @@ type User struct {
 func ConnectDatabase() {
 	// Load env vars
 	err := godotenv.Load()
+
+	isCloud := os.Getenv("IS_CLOUD")
+
 	if err != nil {
-		log.Fatal("Error loading .env file")
-		return
+		// Ignore error if running in k8s
+		if isCloud != "true" {
+			log.Fatal("Error loading .env file")
+			return
+		}
 	}
 
 	pgUser := os.Getenv("PG_USER")
