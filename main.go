@@ -14,6 +14,7 @@ func main() {
 	// logger and recovery (crash-free) middleware
 	router := gin.Default()
 
+	router.GET("/", controllers.Index)
 	router.POST("/login", controllers.Login)
 	router.POST("/register", controllers.Register)
 	router.GET("/verify", controllers.Verify)
