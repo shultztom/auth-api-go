@@ -4,6 +4,7 @@ import (
 	"auth-api-go/controllers"
 	"auth-api-go/models"
 	"fmt"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -13,6 +14,9 @@ func main() {
 	// Creates a gin router with default middleware:
 	// logger and recovery (crash-free) middleware
 	router := gin.Default()
+
+	// cors, allow all
+	router.Use(cors.Default())
 
 	router.GET("/", controllers.Index)
 	router.POST("/login", controllers.Login)
