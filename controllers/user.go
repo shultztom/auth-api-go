@@ -97,7 +97,7 @@ func Login(c *gin.Context) {
 	var user models.User
 
 	if err := models.DB.Where("username = ?", userReq.Username).First(&user).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "User not found!"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "User not found!"})
 		return
 	}
 
