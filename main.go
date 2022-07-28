@@ -15,8 +15,11 @@ func main() {
 	// logger and recovery (crash-free) middleware
 	router := gin.Default()
 
-	// cors, allow all
-	router.Use(cors.Default())
+	// cors, allow all and new header
+	config := cors.DefaultConfig()
+	config.AllowAllOrigins = true
+	config.AddAllowHeaders("x-auth-token")
+	router.Use(cors.New(config))
 
 	router.GET("/", controllers.Index)
 	router.POST("/login", controllers.Login)
