@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"auth-api-go/models"
+	"auth-api-go/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
@@ -11,7 +12,6 @@ import (
 )
 
 // Structs
-
 type userRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -23,7 +23,6 @@ type Claims struct {
 }
 
 // JWT secret
-
 var jwtKey = []byte(os.Getenv("JWT_SECRET"))
 
 // Utils
@@ -112,21 +111,7 @@ func Login(c *gin.Context) {
 
 // Verify GET /verify
 func Verify(c *gin.Context) {
-	tokenHeader := c.GetHeader("x-auth-token")
-
-	if tokenHeader == "" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Missing Token!"})
-		return
-	}
-
-	//claims := jwt.MapClaims{}
-	token, err := jwt.Parse(tokenHeader, func(token *jwt.Token) (interface{}, error) {
-		return jwtKey, nil
-	})
-	if err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Unable to Parse Token!"})
-		return
-	}
+	token := utils.ParseToken(c, jwtKey)
 
 	isValid := token.Valid
 
