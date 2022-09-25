@@ -30,3 +30,23 @@ Headers:
 ```
 x-auth-token
 ```
+
+#### GET - /roles
+
+Headers:
+```
+x-auth-token
+```
+
+#### POST - /roles
+
+Headers:
+```
+x-auth-token
+```
+
+```json
+{
+  "role": "role-name"
+}
+```
