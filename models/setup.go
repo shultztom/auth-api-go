@@ -16,6 +16,12 @@ type User struct {
 	Hash     string `json:"hash"`
 }
 
+type Roles struct {
+	gorm.Model
+	Username string `json:"username" gorm:"index:idx_user"`
+	Role     string `json:"role"`
+}
+
 func ConnectDatabase() {
 	// Load env vars
 	err := godotenv.Load()
@@ -40,7 +46,7 @@ func ConnectDatabase() {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	// Migrate the schema
-	err = db.AutoMigrate(&User{})
+	err = db.AutoMigrate(&User{}, &Roles{})
 	if err != nil {
 		log.Fatal("Error Migrating DB Schema")
 		return
