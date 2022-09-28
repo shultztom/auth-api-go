@@ -27,6 +27,7 @@ func main() {
 	router.GET("/verify", controllers.Verify)
 
 	router.GET("/roles", controllers.GetRoles)
+	router.GET("/roles/:role", controllers.DoesUserHaveRole)
 	router.POST("/roles", controllers.AddRole)
 
 	// By default, it serves on :8080 unless a

@@ -38,6 +38,13 @@ Headers:
 x-auth-token
 ```
 
+#### GET - /roles/:role
+
+Headers:
+```
+x-auth-token
+```
+
 #### POST - /roles
 
 Headers:

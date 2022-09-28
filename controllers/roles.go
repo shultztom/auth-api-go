@@ -30,6 +30,21 @@ func GetRoles(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"Roles": roles})
 }
 
+// DoesUserHaveRole GET /roles/<role>
+func DoesUserHaveRole(c *gin.Context) {
+	// Get role from url
+	role := c.Param("role")
+
+	// Get user from token
+	token := utils.ParseToken(c, jwtKey)
+	var username = token.Claims.(jwt.MapClaims)["username"]
+
+	// Look to see if user already has role
+	var hasRoleAlready = utils.RoleCheck(c, role, username.(string))
+
+	c.JSON(http.StatusOK, gin.H{"hasRoleAlready": hasRoleAlready})
+}
+
 // AddRole POST /roles
 func AddRole(c *gin.Context) {
 	// Get user from token
@@ -42,19 +57,8 @@ func AddRole(c *gin.Context) {
 	}
 
 	// Look to see if user already has role
-	var roles []models.Roles
-	result := models.DB.Find(&roles, "username = ?", username)
-	if result.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Roles for User not found!"})
-		return
-	}
-	var hasRoleAlready = false
-	for i := 0; i < len(roles); i++ {
-		if roles[i].Role == newRole.Role {
-			hasRoleAlready = true
-			break
-		}
-	}
+	var hasRoleAlready = utils.RoleCheck(c, newRole.Role, username.(string))
+
 	if hasRoleAlready {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "User already has role!"})
 		return
