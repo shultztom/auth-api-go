@@ -31,6 +31,13 @@ Headers:
 x-auth-token
 ```
 
+#### DELETE - /verify
+
+Headers:
+```
+x-auth-token
+```
+
 #### GET - /roles
 
 Headers:

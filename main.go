@@ -25,6 +25,7 @@ func main() {
 	router.POST("/login", controllers.Login)
 	router.POST("/register", controllers.Register)
 	router.GET("/verify", controllers.Verify)
+	router.DELETE("/", controllers.DeleteUser)
 
 	router.GET("/roles", controllers.GetRoles)
 	router.GET("/roles/:role", controllers.DoesUserHaveRole)

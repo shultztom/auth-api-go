@@ -120,5 +120,22 @@ func Verify(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Token!"})
 	}
+}
+
+// DeleteUser DELETE /
+func DeleteUser(c *gin.Context) {
+	// Get user from token
+	token := utils.ParseToken(c, jwtKey)
+	var username = token.Claims.(jwt.MapClaims)["username"]
+
+	var user models.User
+
+	result := models.DB.Where("username = ?", username).Delete(&user)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"Deleted user": username})
 
 }
