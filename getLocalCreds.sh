@@ -1,0 +1,1 @@
+gcloud secrets versions access 1 --secret="pg-local"
