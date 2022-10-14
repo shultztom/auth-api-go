@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"net/http"
@@ -9,8 +8,6 @@ import (
 
 func ParseToken(c *gin.Context, jwtKey []byte, headerName string) *jwt.Token {
 	tokenHeader := c.GetHeader(headerName)
-
-	fmt.Println(jwtKey)
 
 	if tokenHeader == "" {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Missing Token!"})
