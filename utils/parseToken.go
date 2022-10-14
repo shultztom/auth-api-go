@@ -6,8 +6,8 @@ import (
 	"net/http"
 )
 
-func ParseToken(c *gin.Context, jwtKey []byte) *jwt.Token {
-	tokenHeader := c.GetHeader("x-auth-token")
+func ParseToken(c *gin.Context, jwtKey []byte, headerName string) *jwt.Token {
+	tokenHeader := c.GetHeader(headerName)
 
 	if tokenHeader == "" {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Missing Token!"})

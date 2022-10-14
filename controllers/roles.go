@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"net/http"
+	"os"
 )
 
 // Uses some global vars from users.go
@@ -17,7 +18,9 @@ type roleRequest struct {
 
 // GetRoles GET /roles
 func GetRoles(c *gin.Context) {
-	token := utils.ParseToken(c, jwtKey)
+	jwtKey := []byte(os.Getenv("JWT_SECRET"))
+
+	token := utils.ParseToken(c, jwtKey, "x-auth-token")
 	var username = token.Claims.(jwt.MapClaims)["username"]
 
 	var roles []models.Roles
@@ -32,11 +35,13 @@ func GetRoles(c *gin.Context) {
 
 // DoesUserHaveRole GET /roles/<role>
 func DoesUserHaveRole(c *gin.Context) {
+	jwtKey := []byte(os.Getenv("JWT_SECRET"))
+
 	// Get role from url
 	role := c.Param("role")
 
 	// Get user from token
-	token := utils.ParseToken(c, jwtKey)
+	token := utils.ParseToken(c, jwtKey, "x-auth-token")
 	var username = token.Claims.(jwt.MapClaims)["username"]
 
 	// Look to see if user already has role
@@ -47,8 +52,10 @@ func DoesUserHaveRole(c *gin.Context) {
 
 // AddRole POST /roles
 func AddRole(c *gin.Context) {
+	jwtKey := []byte(os.Getenv("JWT_SECRET"))
+	
 	// Get user from token
-	token := utils.ParseToken(c, jwtKey)
+	token := utils.ParseToken(c, jwtKey, "x-auth-token")
 	var username = token.Claims.(jwt.MapClaims)["username"]
 
 	var newRole roleRequest

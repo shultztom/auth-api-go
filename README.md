@@ -31,7 +31,7 @@ Headers:
 x-auth-token
 ```
 
-#### DELETE - /verify
+#### DELETE - /
 
 Headers:
 ```
@@ -63,4 +63,11 @@ x-auth-token
 {
   "role": "role-name"
 }
+```
+
+#### GET - /app/verify
+
+Headers:
+```
+X-API-Token
 ```
