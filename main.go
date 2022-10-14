@@ -19,6 +19,7 @@ func main() {
 	config := cors.DefaultConfig()
 	config.AllowAllOrigins = true
 	config.AddAllowHeaders("x-auth-token")
+	config.AddAllowHeaders("X-API-Token")
 	router.Use(cors.New(config))
 
 	router.GET("/", controllers.Index)
