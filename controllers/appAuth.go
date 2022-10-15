@@ -18,10 +18,13 @@ type AppClaims struct {
 func AppVerify(c *gin.Context) {
 	appJwtKey := []byte(os.Getenv("JWT_APP_SECRET"))
 	token, err := utils.ParseToken(c, appJwtKey, "X-API-Token")
+	if err != nil {
+		return
+	}
 
 	isValid := token.Valid
 
-	if isValid && err != nil {
+	if isValid {
 		c.JSON(http.StatusOK, gin.H{"message": "success"})
 	} else {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Token!"})
