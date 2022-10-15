@@ -71,3 +71,11 @@ Headers:
 ```
 X-API-Token
 ```
+
+
+#### DELETE - /app/user/:username
+
+Headers:
+```
+X-API-Token
+```

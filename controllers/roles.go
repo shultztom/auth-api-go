@@ -20,7 +20,10 @@ type roleRequest struct {
 func GetRoles(c *gin.Context) {
 	jwtKey := []byte(os.Getenv("JWT_SECRET"))
 
-	token := utils.ParseToken(c, jwtKey, "x-auth-token")
+	token, err := utils.ParseToken(c, jwtKey, "x-auth-token")
+	if err != nil {
+		return
+	}
 	var username = token.Claims.(jwt.MapClaims)["username"]
 
 	var roles []models.Roles
@@ -41,7 +44,10 @@ func DoesUserHaveRole(c *gin.Context) {
 	role := c.Param("role")
 
 	// Get user from token
-	token := utils.ParseToken(c, jwtKey, "x-auth-token")
+	token, err := utils.ParseToken(c, jwtKey, "x-auth-token")
+	if err != nil {
+		return
+	}
 	var username = token.Claims.(jwt.MapClaims)["username"]
 
 	// Look to see if user already has role
@@ -53,9 +59,12 @@ func DoesUserHaveRole(c *gin.Context) {
 // AddRole POST /roles
 func AddRole(c *gin.Context) {
 	jwtKey := []byte(os.Getenv("JWT_SECRET"))
-	
+
 	// Get user from token
-	token := utils.ParseToken(c, jwtKey, "x-auth-token")
+	token, err := utils.ParseToken(c, jwtKey, "x-auth-token")
+	if err != nil {
+		return
+	}
 	var username = token.Claims.(jwt.MapClaims)["username"]
 
 	var newRole roleRequest
@@ -77,9 +86,9 @@ func AddRole(c *gin.Context) {
 		Role:     newRole.Role,
 	}
 
-	_, err := models.DB.Create(roleEntry).Rows()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+	_, dbErr := models.DB.Create(roleEntry).Rows()
+	if dbErr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": dbErr})
 		return
 	}
 

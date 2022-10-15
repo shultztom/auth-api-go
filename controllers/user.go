@@ -111,7 +111,10 @@ func Login(c *gin.Context) {
 func Verify(c *gin.Context) {
 	jwtKey := []byte(os.Getenv("JWT_SECRET"))
 
-	token := utils.ParseToken(c, jwtKey, "x-auth-token")
+	token, err := utils.ParseToken(c, jwtKey, "x-auth-token")
+	if err != nil {
+		return
+	}
 
 	isValid := token.Valid
 
@@ -127,7 +130,10 @@ func DeleteUser(c *gin.Context) {
 	jwtKey := []byte(os.Getenv("JWT_SECRET"))
 
 	// Get user from token
-	token := utils.ParseToken(c, jwtKey, "x-auth-token")
+	token, err := utils.ParseToken(c, jwtKey, "x-auth-token")
+	if err != nil {
+		return
+	}
 	var username = token.Claims.(jwt.MapClaims)["username"]
 
 	var user models.User
