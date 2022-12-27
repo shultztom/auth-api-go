@@ -19,6 +19,7 @@ func main() {
 	config := cors.DefaultConfig()
 	config.AllowAllOrigins = true
 	config.AddAllowHeaders("x-auth-token")
+	config.AddAllowHeaders("X-API-Token")
 	router.Use(cors.New(config))
 
 	router.GET("/", controllers.Index)
@@ -30,6 +31,12 @@ func main() {
 	router.GET("/roles", controllers.GetRoles)
 	router.GET("/roles/:role", controllers.DoesUserHaveRole)
 	router.POST("/roles", controllers.AddRole)
+
+	appRoutes := router.Group("/app")
+	{
+		appRoutes.GET("/verify", controllers.AppVerify)
+		appRoutes.DELETE("/user/:username", controllers.AppDeleteUser)
+	}
 
 	// By default, it serves on :8080 unless a
 	// PORT environment variable was defined.

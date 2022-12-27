@@ -22,11 +22,7 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-// JWT secret
-var jwtKey = []byte(os.Getenv("JWT_SECRET"))
-
 // Utils
-
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	return string(bytes), err
@@ -38,6 +34,8 @@ func CheckPasswordHash(password, hash string) bool {
 }
 
 func CreateToken(username string) string {
+	jwtKey := []byte(os.Getenv("JWT_SECRET"))
+
 	expirationTime := time.Now().Add(8 * time.Hour)
 
 	// Create the JWT claims, which includes the username and expiry time
@@ -111,7 +109,12 @@ func Login(c *gin.Context) {
 
 // Verify GET /verify
 func Verify(c *gin.Context) {
-	token := utils.ParseToken(c, jwtKey)
+	jwtKey := []byte(os.Getenv("JWT_SECRET"))
+
+	token, err := utils.ParseToken(c, jwtKey, "x-auth-token")
+	if err != nil {
+		return
+	}
 
 	isValid := token.Valid
 
@@ -124,8 +127,13 @@ func Verify(c *gin.Context) {
 
 // DeleteUser DELETE /
 func DeleteUser(c *gin.Context) {
+	jwtKey := []byte(os.Getenv("JWT_SECRET"))
+
 	// Get user from token
-	token := utils.ParseToken(c, jwtKey)
+	token, err := utils.ParseToken(c, jwtKey, "x-auth-token")
+	if err != nil {
+		return
+	}
 	var username = token.Claims.(jwt.MapClaims)["username"]
 
 	var user models.User
