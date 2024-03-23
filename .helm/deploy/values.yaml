@@ -76,13 +76,16 @@ ingress:
   enabled: true
   annotations:
     kubernetes.io/ingress.class: nginx
-    cert-manager.io/cluster-issuer: letsencrypt-production
-  tls:
-    - secretName: auth-api-go-tls
-      hosts:
-        - auth-api-go.shultzlab.com
+#    cert-manager.io/cluster-issuer: letsencrypt-production
+#  tls:
+#    - secretName: auth-api-go-tls
+#      hosts:
+#        - auth-api-go.shultzlab.com
   hosts:
     - host: auth-api-go.shultzlab.com
+      paths:
+        - name: /
+    - host: auth-api-go.internalshultzlab.com
       paths:
         - name: /
 
