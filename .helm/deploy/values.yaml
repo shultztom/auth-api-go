@@ -63,6 +63,8 @@ env:
         name: auth.api.secret
         key: JWT_SECRET
         optional: false
+  - name: REDIS_URL
+    value: "10.0.0.98:6379"
   - name: IS_CLOUD
     value: "true"
   - name: GIN_MODE
