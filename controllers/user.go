@@ -77,7 +77,7 @@ func CreateToken(username string) (string, error) {
 	}
 
 	// Save as session in redis
-	now := time.Now().Add(-5 * time.Minute) // Shorter than expiration time to account for latency
+	now := time.Now().Add(-1 * time.Minute) // Shorter than expiration time to account for latency
 	duration := expirationTime.Sub(now)
 	err = redis.REDIS.Set(ctx, username+"-token", tokenString, duration).Err()
 	if err != nil {
