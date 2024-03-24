@@ -3,12 +3,15 @@ package main
 import (
 	"auth-api-go/controllers"
 	"auth-api-go/models"
+	"auth-api-go/redis"
 	"fmt"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
+	redis.ConnectRedis()
 	models.ConnectDatabase()
 
 	// Creates a gin router with default middleware:
@@ -27,6 +30,7 @@ func main() {
 	router.POST("/register", controllers.Register)
 	router.GET("/verify", controllers.Verify)
 	router.DELETE("/", controllers.DeleteUser)
+	router.DELETE("/session", controllers.DeleteUserSession)
 
 	router.GET("/roles", controllers.GetRoles)
 	router.GET("/roles/:role", controllers.DoesUserHaveRole)

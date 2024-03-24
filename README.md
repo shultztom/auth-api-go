@@ -38,6 +38,13 @@ Headers:
 x-auth-token
 ```
 
+#### DELETE - /session
+
+Headers:
+```
+x-auth-token
+```
+
 #### GET - /roles
 
 Headers:

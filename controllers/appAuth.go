@@ -3,10 +3,11 @@ package controllers
 import (
 	"auth-api-go/models"
 	"auth-api-go/utils"
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
 	"net/http"
 	"os"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 )
 
 type AppClaims struct {
@@ -19,6 +20,7 @@ func AppVerify(c *gin.Context) {
 	appJwtKey := []byte(os.Getenv("JWT_APP_SECRET"))
 	token, err := utils.ParseToken(c, appJwtKey, "X-API-Token")
 	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Token!"})
 		return
 	}
 
@@ -36,15 +38,24 @@ func AppDeleteUser(c *gin.Context) {
 	appJwtKey := []byte(os.Getenv("JWT_APP_SECRET"))
 	token, err := utils.ParseToken(c, appJwtKey, "X-API-Token")
 	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Token!"})
 		return
 	}
 
 	if !token.Valid {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Token!"})
 		return
 	}
 
 	// Get user from request
 	username := c.Param("username")
+
+	// Delete active sessions, if any
+	_, err = DeleteSessionInRedis(username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
 
 	var user models.User
 
