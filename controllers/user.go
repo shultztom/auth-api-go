@@ -2,13 +2,17 @@ package controllers
 
 import (
 	"auth-api-go/models"
+	"auth-api-go/redis"
 	"auth-api-go/utils"
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
-	"golang.org/x/crypto/bcrypt"
+	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Structs
@@ -33,7 +37,25 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-func CreateToken(username string) string {
+func CreateToken(username string) (string, error) {
+	ctx := context.Background()
+
+	// See if token exists in redis
+	val, err := redis.REDIS.Get(ctx, username+"-token").Result()
+	if err != nil {
+		if err.Error() == "redis: nil" {
+			fmt.Println("Token not found in redis; will make new one")
+		} else {
+			fmt.Println("error with redis get", err.Error())
+			return "", fmt.Errorf("error with redis get: %v", err)
+		}
+	}
+
+	if val != "" {
+		fmt.Println("token found in redis; returning it")
+		return val, nil
+	}
+
 	jwtKey := []byte(os.Getenv("JWT_SECRET"))
 
 	expirationTime := time.Now().Add(8 * time.Hour)
@@ -51,10 +73,30 @@ func CreateToken(username string) string {
 	// Create the JWT string
 	tokenString, err := token.SignedString(jwtKey)
 	if err != nil {
-		// TODO improve error handling
-		return "error"
+		return "", fmt.Errorf("error with creating token: %v", err)
 	}
-	return tokenString
+
+	// Save as session in redis
+	now := time.Now().Add(-5 * time.Minute) // Shorter than expiration time to account for latency
+	duration := expirationTime.Sub(now)
+	err = redis.REDIS.Set(ctx, username+"-token", tokenString, duration).Err()
+	if err != nil {
+		fmt.Println("error with redis set", err.Error())
+		return "", fmt.Errorf("error with redis set: %v", err)
+	}
+
+	return tokenString, nil
+}
+
+func DeleteSessionInRedis(username string) (bool, error) {
+	// Delete sessions in redis
+	ctx := context.Background()
+	err := redis.REDIS.Del(ctx, username+"-token").Err()
+	if err != nil {
+		fmt.Println("error with redis del", err.Error())
+		return false, fmt.Errorf("error with redis del: %v", err)
+	}
+	return true, nil
 }
 
 // Register POST /register
@@ -77,7 +119,11 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	token := CreateToken(userEntry.Username)
+	token, err := CreateToken(userEntry.Username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
 
 	c.JSON(http.StatusCreated, gin.H{"token": token})
 
@@ -100,7 +146,11 @@ func Login(c *gin.Context) {
 
 	isMatch := CheckPasswordHash(userReq.Password, user.Hash)
 	if isMatch {
-		token := CreateToken(userReq.Username)
+		token, err := CreateToken(userReq.Username)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+			return
+		}
 		c.JSON(http.StatusOK, gin.H{"token": token})
 	} else {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Password is incorrect!"})
@@ -113,6 +163,7 @@ func Verify(c *gin.Context) {
 
 	token, err := utils.ParseToken(c, jwtKey, "x-auth-token")
 	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Token!"})
 		return
 	}
 
@@ -132,9 +183,17 @@ func DeleteUser(c *gin.Context) {
 	// Get user from token
 	token, err := utils.ParseToken(c, jwtKey, "x-auth-token")
 	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Token!"})
 		return
 	}
 	var username = token.Claims.(jwt.MapClaims)["username"]
+
+	// Delete active sessions, if any
+	_, err = DeleteSessionInRedis(username.(string))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
 
 	var user models.User
 
@@ -145,5 +204,25 @@ func DeleteUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"Deleted user": username})
+}
 
+// DeleteUser DELETE /session
+func DeleteUserSession(c *gin.Context) {
+	jwtKey := []byte(os.Getenv("JWT_SECRET"))
+
+	// Get user from token
+	token, err := utils.ParseToken(c, jwtKey, "x-auth-token")
+	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Token!"})
+		return
+	}
+	var username = token.Claims.(jwt.MapClaims)["username"]
+
+	_, err = DeleteSessionInRedis(username.(string))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"Deleted session for user": username})
 }

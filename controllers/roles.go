@@ -3,10 +3,11 @@ package controllers
 import (
 	"auth-api-go/models"
 	"auth-api-go/utils"
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
 	"net/http"
 	"os"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 )
 
 // Uses some global vars from users.go
@@ -22,6 +23,7 @@ func GetRoles(c *gin.Context) {
 
 	token, err := utils.ParseToken(c, jwtKey, "x-auth-token")
 	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Token!"})
 		return
 	}
 	var username = token.Claims.(jwt.MapClaims)["username"]
@@ -46,6 +48,7 @@ func DoesUserHaveRole(c *gin.Context) {
 	// Get user from token
 	token, err := utils.ParseToken(c, jwtKey, "x-auth-token")
 	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Token!"})
 		return
 	}
 	var username = token.Claims.(jwt.MapClaims)["username"]
@@ -63,6 +66,7 @@ func AddRole(c *gin.Context) {
 	// Get user from token
 	token, err := utils.ParseToken(c, jwtKey, "x-auth-token")
 	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Token!"})
 		return
 	}
 	var username = token.Claims.(jwt.MapClaims)["username"]
