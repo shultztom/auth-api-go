@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
@@ -36,11 +37,23 @@ func ConnectRedis() {
 		DB:       0,  // use default DB
 	})
 
-	pong, err := client.Ping(ctx).Result()
-	if err != nil {
-		fmt.Println("Could not connect to Redis:", err)
-	} else {
-		fmt.Println("Connected to Redis:", pong)
-		REDIS = client
+	maxRetries := 3
+	retryDelay := 15 * time.Second
+
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		pong, err := client.Ping(ctx).Result()
+		if err != nil {
+			fmt.Printf("Attempt %d/%d: Could not connect to Redis: %v\n", attempt, maxRetries, err)
+			if attempt < maxRetries {
+				fmt.Printf("Retrying in %v...\n", retryDelay)
+				time.Sleep(retryDelay)
+			} else {
+				log.Fatal("Failed to connect to Redis after all retries. Exiting application.")
+			}
+		} else {
+			fmt.Println("Connected to Redis:", pong)
+			REDIS = client
+			return
+		}
 	}
 }
