@@ -1,16 +1,13 @@
 package controllers
 
 import (
-	"auth-api-go/models"
-	"auth-api-go/utils"
+	"auth-api-go/services"
 	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 )
-
-// Uses some global vars from users.go
 
 // Structs
 type roleRequest struct {
@@ -20,17 +17,17 @@ type roleRequest struct {
 // GetRoles GET /roles
 func GetRoles(c *gin.Context) {
 	jwtKey := []byte(os.Getenv("JWT_SECRET"))
+	tokenHeader := c.GetHeader("x-auth-token")
 
-	token, err := utils.ParseToken(c, jwtKey, "x-auth-token")
+	token, err := services.ParseToken(tokenHeader, jwtKey)
 	if err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Token!"})
 		return
 	}
 	var username = token.Claims.(jwt.MapClaims)["username"]
 
-	var roles []models.Roles
-	result := models.DB.Find(&roles, "username = ?", username)
-	if result.Error != nil {
+	roles, err := services.GetRolesByUsername(username.(string))
+	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Roles for User not found!"})
 		return
 	}
@@ -41,12 +38,13 @@ func GetRoles(c *gin.Context) {
 // DoesUserHaveRole GET /roles/<role>
 func DoesUserHaveRole(c *gin.Context) {
 	jwtKey := []byte(os.Getenv("JWT_SECRET"))
+	tokenHeader := c.GetHeader("x-auth-token")
 
 	// Get role from url
 	role := c.Param("role")
 
 	// Get user from token
-	token, err := utils.ParseToken(c, jwtKey, "x-auth-token")
+	token, err := services.ParseToken(tokenHeader, jwtKey)
 	if err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Token!"})
 		return
@@ -54,7 +52,11 @@ func DoesUserHaveRole(c *gin.Context) {
 	var username = token.Claims.(jwt.MapClaims)["username"]
 
 	// Look to see if user already has role
-	var hasRoleAlready = utils.RoleCheck(c, role, username.(string))
+	hasRoleAlready, err := services.RoleCheck(role, username.(string))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error getting roles for User!"})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{"hasRoleAlready": hasRoleAlready})
 }
@@ -62,9 +64,10 @@ func DoesUserHaveRole(c *gin.Context) {
 // AddRole POST /roles
 func AddRole(c *gin.Context) {
 	jwtKey := []byte(os.Getenv("JWT_SECRET"))
+	tokenHeader := c.GetHeader("x-auth-token")
 
 	// Get user from token
-	token, err := utils.ParseToken(c, jwtKey, "x-auth-token")
+	token, err := services.ParseToken(tokenHeader, jwtKey)
 	if err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Token!"})
 		return
@@ -77,7 +80,11 @@ func AddRole(c *gin.Context) {
 	}
 
 	// Look to see if user already has role
-	var hasRoleAlready = utils.RoleCheck(c, newRole.Role, username.(string))
+	hasRoleAlready, err := services.RoleCheck(newRole.Role, username.(string))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error getting roles for User!"})
+		return
+	}
 
 	if hasRoleAlready {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "User already has role!"})
@@ -85,14 +92,9 @@ func AddRole(c *gin.Context) {
 	}
 
 	// Add Role
-	roleEntry := &models.Roles{
-		Username: username.(string),
-		Role:     newRole.Role,
-	}
-
-	_, dbErr := models.DB.Create(roleEntry).Rows()
-	if dbErr != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": dbErr})
+	err = services.AddRole(username.(string), newRole.Role)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
 

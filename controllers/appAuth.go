@@ -1,8 +1,7 @@
 package controllers
 
 import (
-	"auth-api-go/models"
-	"auth-api-go/utils"
+	"auth-api-go/services"
 	"net/http"
 	"os"
 
@@ -18,13 +17,13 @@ type AppClaims struct {
 // AppVerify GET /app/verify
 func AppVerify(c *gin.Context) {
 	appJwtKey := []byte(os.Getenv("JWT_APP_SECRET"))
-	token, err := utils.ParseToken(c, appJwtKey, "X-API-Token")
+	tokenHeader := c.GetHeader("X-API-Token")
+
+	isValid, err := services.VerifyToken(tokenHeader, appJwtKey)
 	if err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Token!"})
 		return
 	}
-
-	isValid := token.Valid
 
 	if isValid {
 		c.JSON(http.StatusOK, gin.H{"message": "success"})
@@ -36,13 +35,15 @@ func AppVerify(c *gin.Context) {
 // AppDeleteUser Delete /app/user
 func AppDeleteUser(c *gin.Context) {
 	appJwtKey := []byte(os.Getenv("JWT_APP_SECRET"))
-	token, err := utils.ParseToken(c, appJwtKey, "X-API-Token")
+	tokenHeader := c.GetHeader("X-API-Token")
+
+	isValid, err := services.VerifyToken(tokenHeader, appJwtKey)
 	if err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Token!"})
 		return
 	}
 
-	if !token.Valid {
+	if !isValid {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Token!"})
 		return
 	}
@@ -51,17 +52,15 @@ func AppDeleteUser(c *gin.Context) {
 	username := c.Param("username")
 
 	// Delete active sessions, if any
-	_, err = DeleteSessionInRedis(username)
+	_, err = services.DeleteSessionInRedis(username)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
 
-	var user models.User
-
-	result := models.DB.Where("username = ?", username).Delete(&user)
-	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error})
+	err = services.DeleteUserByUsername(username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
 
