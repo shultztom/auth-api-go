@@ -6,13 +6,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
 )
-
-type AppClaims struct {
-	AppName string `json:"appName"`
-	jwt.StandardClaims
-}
 
 // AppVerify GET /app/verify
 func AppVerify(c *gin.Context) {

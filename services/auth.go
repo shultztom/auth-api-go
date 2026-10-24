@@ -8,13 +8,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type Claims struct {
 	Username string `json:"username"`
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 func HashPassword(password string) (string, error) {
@@ -53,9 +53,8 @@ func CreateToken(username string) (string, error) {
 	// Create the JWT claims, which includes the username and expiry time
 	claims := &Claims{
 		Username: username,
-		StandardClaims: jwt.StandardClaims{
-			// In JWT, the expiry time is expressed as unix milliseconds
-			ExpiresAt: expirationTime.Unix(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},
 	}
 	// Declare the token with the algorithm used for signing, and the claims
@@ -83,19 +82,22 @@ func ParseToken(tokenHeader string, jwtKey []byte) (*jwt.Token, error) {
 		return nil, errors.New("missing token")
 	}
 
-	token, err := jwt.Parse(tokenHeader, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(tokenHeader, func(token *jwt.Token) (any, error) {
 		return jwtKey, nil
-	})
+	}, jwt.WithValidMethods([]string{"HS256"}), jwt.WithExpirationRequired())
 
 	if err != nil {
 		return nil, errors.New("unable to parse token")
 	}
 
 	// Verify session exists
-	var username = token.Claims.(jwt.MapClaims)["username"]
+	username, ok := token.Claims.(jwt.MapClaims)["username"].(string)
+	if !ok || username == "" {
+		return nil, errors.New("unable to parse token")
+	}
 
 	ctx := context.Background()
-	val, err := redis.REDIS.Get(ctx, username.(string)+"-token").Result()
+	val, err := redis.REDIS.Get(ctx, username+"-token").Result()
 	if err != nil {
 		if err.Error() == "redis: nil" {
 			// Token not found in redis; throw forbidden error
@@ -128,6 +130,9 @@ func GetUsernameFromToken(tokenHeader string, jwtKey []byte) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	username := token.Claims.(jwt.MapClaims)["username"]
-	return username.(string), nil
+	username, ok := token.Claims.(jwt.MapClaims)["username"].(string)
+	if !ok {
+		return "", errors.New("unable to parse token")
+	}
+	return username, nil
 }
