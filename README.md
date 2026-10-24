@@ -268,4 +268,4 @@ The image version lives in the `VERSION` file and is shared by the build and dep
 2. `./dockerBuildAndPush.sh` builds and pushes `auth-api-go:<VERSION>` and `:latest`. It refuses to run if that version already exists in the registry.
 3. `./helmDeploy.sh` deploys `<VERSION>`. To redeploy or roll back to another version: `./helmDeploy.sh 1.0.0`.
 
-For Cloud Build, pass the version with `--substitutions=_TAG=$(cat VERSION)`.
+`cloudbuild.yaml` does the same build and push (version tag plus `latest`) from the `VERSION` file, so no substitutions are needed.
