@@ -2,8 +2,9 @@ package services
 
 import (
 	"testing"
+	"time"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func TestHashPassword(t *testing.T) {
@@ -161,8 +162,8 @@ func TestParseToken_WrongSigningKey(t *testing.T) {
 	// Create a token with one key
 	claims := &Claims{
 		Username: "testuser",
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: 9999999999,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

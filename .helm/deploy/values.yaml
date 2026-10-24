@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: us-central1-docker.pkg.dev/shultzlab/docker-gcp/auth-api-go
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
   tag: "latest"
 
 imagePullSecrets:

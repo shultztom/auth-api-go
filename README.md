@@ -16,7 +16,7 @@ A RESTful authentication API built with Go, providing user registration, login, 
 
 #### Prerequisites
 
-- Go 1.18+
+- Go 1.27+
 - PostgreSQL
 - Redis
 
@@ -67,6 +67,12 @@ IS_CLOUD=false
 ```bash
 go test ./... -v
 ```
+
+#### Update Deps
+
+Run `govulncheck` and check results
+
+Can write to file with `govulncheck ./... > vulns.md`
 
 ### API Routes
 
@@ -253,3 +259,13 @@ Response: `200 OK`
     "Deleted user": "<username>"
 }
 ```
+
+## Releasing
+
+The image version lives in the `VERSION` file and is shared by the build and deploy scripts.
+
+1. Bump `VERSION` (e.g. `1.0.1`).
+2. `./dockerBuildAndPush.sh` builds and pushes `auth-api-go:<VERSION>` and `:latest`. It refuses to run if that version already exists in the registry.
+3. `./helmDeploy.sh` deploys `<VERSION>`. To redeploy or roll back to another version: `./helmDeploy.sh 1.0.0`.
+
+`cloudbuild.yaml` does the same build and push (version tag plus `latest`) from the `VERSION` file, so no substitutions are needed.
