@@ -76,8 +76,7 @@ service:
 
 ingress:
   enabled: true
-  annotations:
-    kubernetes.io/ingress.class: nginx
+  annotations: {}
 #    cert-manager.io/cluster-issuer: letsencrypt-production
 #  tls:
 #    - secretName: auth-api-go-tls
@@ -86,10 +85,16 @@ ingress:
   hosts:
     - host: auth-api-go.shultzlab.com
       paths:
-        - name: /
+        - path: /
     - host: auth-api-go.internalshultzlab.com
       paths:
-        - name: /
+        - path: /
+
+livenessProbe:
+  enabled: false
+
+readinessProbe:
+  enabled: false
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
